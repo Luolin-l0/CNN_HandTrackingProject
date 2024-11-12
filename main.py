@@ -190,3 +190,5 @@ while True:
     # 显示图像
     cv2.imshow("Image", img)
     cv2.waitKey(1)
+
+wqlt = "wqlt test git"
