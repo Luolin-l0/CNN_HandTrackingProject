@@ -153,26 +153,9 @@ while True:
             # 更新上一帧的无名指y坐标
             prev_ring_y = y_ring
 
-        # 三指滑动滚动模式（食指、中指和无名指）
-        if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 1:
-            # 滑动手势的检测
-            x_ring, y_ring = lmList[16][1:]  # 获取无名指的y坐标
-            if prev_ring_y!= 0:
-                if y_ring < prev_ring_y - 20:  # 向上滑动
-                    # 使用键盘模拟翻页
-                    keyboard.press(Key.page_down)
-                    keyboard.release(Key.page_down)
-                    print("Scrolling Down (Page Down)")
-                elif y_ring > prev_ring_y + 20:  # 向下滑动
-                    # 使用键盘模拟翻页
-                    keyboard.press(Key.page_up)
-                    keyboard.release(Key.page_up)
-                    print("Scrolling Up (Page Up)")
-            # 更新上一帧的无名指y坐标
-            prev_ring_y = y_ring
 
         # 双指点击模式
-        elif fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 0 and fingers[4] == 0:
+        elif fingers[1] == 1 and fingers[2] == 1 and fingers[3] != 1 and fingers[4] == 0:
             # 计算两指之间的距离
             length, img, lineInfo = detector.findDistance(8, 12, img)
             if length < 40:
