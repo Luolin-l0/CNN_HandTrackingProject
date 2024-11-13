@@ -93,7 +93,7 @@ while True:
         if fingers == [0, 0, 0, 0, 0]:  # 五指并拢
             if fiveFingersCloseDetectedTime == 0:
                 fiveFingersCloseDetectedTime = time.time()  # 记录五指并拢的时间
-            elif time.time() - fiveFingersCloseDetectedTime >= 0.4:  # 如果超过0.4秒
+            elif time.time() - fiveFingersCloseDetectedTime >= 1.0:  # 如果超过0.4秒
                 print("Five fingers together detected for 0.7 seconds, pressing Alt + F4 to close window.")
                 pyautogui.hotkey('alt', 'f4')  # 模拟按下 Alt + F4 键
                 fiveFingersCloseDetectedTime = 0  # 重置计时器
@@ -141,17 +141,15 @@ while True:
         if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 1:
             # 滑动手势的检测
             x_ring, y_ring = lmList[16][1:]  # 获取无名指的y坐标
-            if prev_ring_y!= 0:
+            if prev_ring_y != 0:
                 if y_ring < prev_ring_y - 20:  # 向上滑动
-                    # 使用键盘模拟翻页
-                    keyboard.press(Key.page_down)
-                    keyboard.release(Key.page_down)
-                    print("Scrolling Down (Page Down)")
+                    # 使用鼠标滚轮向上滑动
+                    pyautogui.scroll(-100)
+                    print("Scrolling Up")
                 elif y_ring > prev_ring_y + 20:  # 向下滑动
-                    # 使用键盘模拟翻页
-                    keyboard.press(Key.page_up)
-                    keyboard.release(Key.page_up)
-                    print("Scrolling Up (Page Up)")
+                    # 使用鼠标滚轮向下滑动
+                    pyautogui.scroll(100)
+                    print("Scrolling Down")
             # 更新上一帧的无名指y坐标
             prev_ring_y = y_ring
 
