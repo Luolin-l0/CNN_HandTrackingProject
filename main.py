@@ -7,6 +7,8 @@ from pynput.keyboard import Controller, Key
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import math
+import win32gui
+import win32con
 
 ##########################
 wCam, hCam = 640, 480
@@ -52,14 +54,21 @@ inVolumeControl = False
 fiveFingersDetectedTime = 0  # 五指张开时间计时器
 fiveFingersCloseDetectedTime = 0  # 五指并拢时间计时器
 
+# 创建窗口并获取窗口句柄
+cv2.namedWindow("Image")
+hwnd = win32gui.FindWindow(None, "Image")
+
 while True:
     # 1. 获取图像并找到手部
     success, img = cap.read()
+
+    img = cv2.flip(img, 1)
+
     img = detector.findHands(img)
     lmList, bbox = detector.findPosition(img)
 
     # 2. 检查是否检测到手部关键点
-    if len(lmList) != 0:
+    if len(lmList)!= 0:
         # 获取食指和大拇指的位置
         x1, y1 = lmList[4][1], lmList[4][2]
         x2, y2 = lmList[8][1], lmList[8][2]
@@ -81,7 +90,7 @@ while True:
         fingers = detector.fingersUp()
         print(f"Fingers Up: {fingers}")
 
-        if fingers == [1, 0, 0, 0, 0]:  # 五指并拢
+        if fingers == [0, 0, 0, 0, 0]:  # 五指并拢
             if fiveFingersCloseDetectedTime == 0:
                 fiveFingersCloseDetectedTime = time.time()  # 记录五指并拢的时间
             elif time.time() - fiveFingersCloseDetectedTime >= 0.4:  # 如果超过0.4秒
@@ -92,7 +101,7 @@ while True:
             fiveFingersCloseDetectedTime = 0  # 五指没有并拢时，重置计时器
 
         # 判断是否进入音量控制模式
-        if length < 50 :  # 食指和大拇指并拢
+        if length < 50 and fingers[1]!=0:  # 食指和大拇指并拢
             if not inVolumeControl:
                 print("Entering Volume Control Mode")
                 inVolumeControl = True
@@ -107,7 +116,7 @@ while True:
 
             # 绘制控制图标
             cv2.circle(img, (cx, cy), 10, (0, 255, 0), cv2.FILLED)  # 用绿色绘制圆形
-        if length_index_middle < 30:
+        if length_index_middle < 40:
             if inVolumeControl:
                 print("Exiting Volume Control Mode")
                 inVolumeControl = False
@@ -132,7 +141,25 @@ while True:
         if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 1:
             # 滑动手势的检测
             x_ring, y_ring = lmList[16][1:]  # 获取无名指的y坐标
-            if prev_ring_y != 0:
+            if prev_ring_y!= 0:
+                if y_ring < prev_ring_y - 20:  # 向上滑动
+                    # 使用键盘模拟翻页
+                    keyboard.press(Key.page_down)
+                    keyboard.release(Key.page_down)
+                    print("Scrolling Down (Page Down)")
+                elif y_ring > prev_ring_y + 20:  # 向下滑动
+                    # 使用键盘模拟翻页
+                    keyboard.press(Key.page_up)
+                    keyboard.release(Key.page_up)
+                    print("Scrolling Up (Page Up)")
+            # 更新上一帧的无名指y坐标
+            prev_ring_y = y_ring
+
+        # 三指滑动滚动模式（食指、中指和无名指）
+        if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 1:
+            # 滑动手势的检测
+            x_ring, y_ring = lmList[16][1:]  # 获取无名指的y坐标
+            if prev_ring_y!= 0:
                 if y_ring < prev_ring_y - 20:  # 向上滑动
                     # 使用键盘模拟翻页
                     keyboard.press(Key.page_down)
@@ -161,11 +188,11 @@ while True:
                 click_executed = False  # 如果双指分开，重置点击状态
 
         # 单指移动模式
-        elif fingers[1] == 1 and fingers[2] == 0:
+        elif fingers[1] == 1 :
             print("Moving Mode Activated")
             # 将坐标转换为屏幕坐标
             x1, y1 = lmList[8][1:]
-            x3 = np.interp(x1, (frameR, wCam - frameR), (wScr, 0))
+            x3 = np.interp(x1, (frameR, wCam - frameR), (0, wScr))
             y3 = np.interp(y1, (frameR, hCam - frameR), (0, hScr))
 
             # 平滑移动
@@ -189,6 +216,9 @@ while True:
 
     # 显示图像
     cv2.imshow("Image", img)
-    cv2.waitKey(1)
 
-wqlt = "wqlt test git"
+    # 设置窗口置顶
+    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+
+    cv2.waitKey(1)
